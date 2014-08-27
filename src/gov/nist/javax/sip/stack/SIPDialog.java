@@ -177,6 +177,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     private Via lastResponseTopMostVia;
     protected Integer lastResponseStatusCode;
     protected long lastResponseCSeqNumber;
+    protected long lastInviteResponseCSeqNumber;
     protected String lastResponseMethod;
     protected String lastResponseFromTag;
     protected String lastResponseToTag;
@@ -1699,6 +1700,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                 || this.dialogState == TERMINATED_STATE) {
             return;
         }
+        
+        // put the contact header from the incoming request into
+        // the route set. JvB: some duplication here, ref. doTargetRefresh
+        ContactList contactList = sipRequest.getContactHeaders();
+        if (contactList != null) {
+            this.setRemoteTarget((ContactHeader) contactList.getFirst());
+        }
 
         // Fix for issue #225: mustn't learn Route set from mid-dialog requests
         if (sipRequest.getToTag() != null)
@@ -1715,12 +1723,6 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             this.routeList = new RouteList();
         }
 
-        // put the contact header from the incoming request into
-        // the route set. JvB: some duplication here, ref. doTargetRefresh
-        ContactList contactList = sipRequest.getContactHeaders();
-        if (contactList != null) {
-            this.setRemoteTarget((ContactHeader) contactList.getFirst());
-        }
     }
 
     /**
@@ -2765,8 +2767,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
 
         try {
             // Increment before setting!!
-            localSequenceNumber++;
-            dialogRequest.getCSeq().setSeqNumber(getLocalSeqNumber());
+        	long cseqNumber = dialogRequest.getCSeq() == null?localSequenceNumber:dialogRequest.getCSeq().getSeqNumber();
+        	if(cseqNumber > localSequenceNumber) {
+        		localSequenceNumber = cseqNumber;
+        	} else {
+        		localSequenceNumber++;
+        	}
+        	dialogRequest.getCSeq().setSeqNumber(getLocalSeqNumber());
         } catch (InvalidArgumentException ex) {
             logger.logFatalError(ex.getMessage());
         }
@@ -3262,6 +3269,9 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             this.lastResponseMethod = cseqMethod;
             long responseCSeqNumber = sipResponse.getCSeq().getSeqNumber();
             this.lastResponseCSeqNumber = responseCSeqNumber;
+            if(Request.INVITE.equals(cseqMethod)) {
+            	this.lastInviteResponseCSeqNumber = responseCSeqNumber;
+            }
             if (sipResponse.getToTag() != null ) {
                 this.lastResponseToTag = sipResponse.getToTag();
             }
@@ -3973,8 +3983,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         	  }
              if (lastResponseStatusCode != null
                     && lastResponseStatusCode.intValue() / 100 == 2
-                    && lastResponseMethod.equals(Request.INVITE)
-                    && lastResponseCSeqNumber == ackTransaction.getCSeq()) {
+                    && lastInviteResponseCSeqNumber == ackTransaction.getCSeq()) {
 
                 ackTransaction.setDialog(this, lastResponseDialogId);
                 /*

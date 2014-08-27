@@ -21,6 +21,7 @@ import gov.nist.core.CommonLogger;
 import gov.nist.core.LogWriter;
 import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.address.SipUri;
+import gov.nist.javax.sip.header.SIPHeader;
 import gov.nist.javax.sip.message.SIPRequest;
 import gov.nist.javax.sip.stack.SIPClientTransaction;
 import gov.nist.javax.sip.stack.SIPTransactionStack;
@@ -127,6 +128,18 @@ public class AuthenticationHelperImpl implements AuthenticationHelper {
     public ClientTransaction handleChallenge(Response challenge,
             ClientTransaction challengedTransaction, SipProvider transactionCreator, int cacheTime)
             throws SipException, NullPointerException {
+        return handleChallenge(challenge, challengedTransaction, transactionCreator, cacheTime, false);
+    }
+    
+    /*
+     * (non-Javadoc)
+     *
+     * @see gov.nist.javax.sip.clientauthutils.AuthenticationHelper#handleChallenge(javax.sip.message.Response,
+     *      javax.sip.ClientTransaction, javax.sip.SipProvider)
+     */
+    public ClientTransaction handleChallenge(Response challenge,
+            ClientTransaction challengedTransaction, SipProvider transactionCreator, int cacheTime, boolean looseRouting)
+            throws SipException, NullPointerException {
         try {
           
             if ( logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
@@ -151,18 +164,16 @@ public class AuthenticationHelperImpl implements AuthenticationHelper {
                  * the route set could change between the original request and the 
                  * in-dialog challenge.
                  */
-                reoriginatedRequest =
-                    challengedTransaction.getDialog().createRequest(challengedRequest.getMethod());
-                Iterator<String> headerNames = challengedRequest.getHeaderNames();
-                while (headerNames.hasNext()) {
-                    String headerName = headerNames.next();
-                    if ( reoriginatedRequest.getHeader(headerName) != null) {
-                        ListIterator<Header> iterator = reoriginatedRequest.getHeaders(headerName);
-                        while (iterator.hasNext()) {
-                            reoriginatedRequest.addHeader(iterator.next());
-                        }
-                    }
-                }
+            	reoriginatedRequest =
+            			challengedTransaction.getDialog().createRequest(challengedRequest.getMethod());
+            	Iterator<String> headerNames = challengedRequest.getHeaderNames();
+            	while (headerNames.hasNext()) {
+            		String headerName = headerNames.next();
+            		if ( reoriginatedRequest.getHeader(headerName) == null) {
+            			ListIterator<SIPHeader> iterator = challengedRequest.getHeaders(headerName);
+            			while (iterator.hasNext()) { reoriginatedRequest.addHeader(iterator.next()); }
+            		}
+            	}
             }
 
 
@@ -211,7 +222,7 @@ public class AuthenticationHelperImpl implements AuthenticationHelper {
             /* Resolve this to the next hop based on the previous lookup. If we are not using
              * lose routing (RFC2543) then just attach hop as a maddr param.
              */
-            if ( challengedRequest.getRouteHeaders() == null ) {
+            if (!looseRouting && challengedRequest.getRouteHeaders() == null ) {
                 Hop hop   = ((SIPClientTransaction) challengedTransaction).getNextHop();
                 SipURI sipUri = (SipURI) reoriginatedRequest.getRequestURI();
                 sipUri.setMAddrParam(hop.getHost());

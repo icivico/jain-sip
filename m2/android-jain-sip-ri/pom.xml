@@ -4,36 +4,27 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>javax.sip</groupId>
-		<version>1.2.1-SNAPSHOT</version>
+		<version>1.2.0</version>
 		<artifactId>jain-sip</artifactId>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
-	<artifactId>jain-sip-ri</artifactId>
+	<artifactId>android-jain-sip-ri</artifactId>
 	<version>1.2.X-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>jain-sip-ri</name>
+	<name>android-jain-sip-ri</name>
 	<url>http://code.google.com/p/jain-sip/</url>
 	<build>
-		<sourceDirectory>../../src</sourceDirectory>
+		<sourceDirectory>../../src/android</sourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-					<includes>
-						<include>gov/nist/javax/sip/**</include>
-						<include>gov/nist/javax/sdp/**</include>
-						<include>gov/nist/core/**</include>
-						<include>javax/sdp/**</include>
-					</includes>
-					<excludes>
-						<exclude>gov/nist/javax/sip/stack/sctp/**</exclude>
-					</excludes>
+					<source>1.7</source>
+					<target>1.7</target>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -105,15 +96,9 @@
 			<resource>
 				<directory>target</directory>
 				<includes>
-					<include>gov/nist/javax/sip/**</include>
-					<include>gov/nist/javax/sdp/**</include>
-					<include>gov/nist/core/**</include>
-					<include>javax/sdp/**</include>
+					<include>com/telestax/**</include>
+					<include>javax/**</include>
 				</includes>
-				<excludes>
-					<exclude>**/*.java</exclude>
-					<exclude>gov/nist/javax/sip/stack/sctp/**</exclude>
-				</excludes>
 			</resource>
 		</resources>		
 	</build>
@@ -150,12 +135,6 @@
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.14</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>javax.sip</groupId>
-			<artifactId>jain-sip-api</artifactId>
-			<version>1.2.0</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

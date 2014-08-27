@@ -410,6 +410,8 @@ public abstract class SIPTransactionStack implements
     private long sslHandshakeTimeout = -1;
     
     private boolean sslRenegotiationEnabled = false;
+    
+    protected SocketTimeoutAuditor socketTimeoutAuditor = null;
 
     private static class SameThreadExecutor implements Executor {
 
@@ -733,7 +735,7 @@ public abstract class SIPTransactionStack implements
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
                 logger.logDebug("NOTIFY Supported Natively");
         } else {
-            dialogCreatingMethods.add(extensionMethod.trim().toUpperCase());
+            dialogCreatingMethods.add(Utils.toUpperCase(extensionMethod.trim()));
         }
     }
 

@@ -253,7 +253,12 @@ public class SSLStateMachine {
 			try {
 				result = sslEngine.unwrap(src, dst);
 			} catch (Exception e) {
-				e.printStackTrace();
+				// https://java.net/jira/browse/JSIP-464 
+				// Make sure to throw the exception so the result variable is not null below which makes the stack hang
+				if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+					logger.logDebug("An Exception occured while trying to unwrap the message " + e);
+				}
+				throw e;
 			}
 			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 				logger.logDebug("Unwrap result " + result + " buffers size " 
@@ -270,8 +275,8 @@ public class SSLStateMachine {
 				clearBuffer();
 			}
 			if(result.getStatus().equals(Status.BUFFER_OVERFLOW)) {
-				if(logger.isLoggingEnabled(LogWriter.TRACE_WARN)) {
-					logger.logWarning("Buffer overflow , must prepare the buffer again. Check for continious overflow here?");
+				if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+					logger.logDebug("Buffer overflow , must prepare the buffer again. Check for continious overflow here?");
 				}
 				dst = channel.prepareAppDataBuffer();
 				continue;
