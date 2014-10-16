@@ -329,10 +329,6 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                 try {
                 	if (mySock != null) { // selfrouting makes socket = null
                         				 // https://jain-sip.dev.java.net/issues/show_bug.cgi?id=297
-                		if(!mySock.isConnected() || mySock.isClosed()) {
-                			logger.logWarning("Client closed the socket before we had a chance to process it. We stop. Socket is " + mySock);
-                			return;
-                		}
                 		this.peerAddress = mySock.getInetAddress();
                 	}
                     // Check to see if the received parameter matches
@@ -368,7 +364,12 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                             .getRemoteSocketAddress()).getPort();
                     String key = IOHandler.makeKey(mySock.getInetAddress(),
                             remotePort);
-                    sipStack.ioHandler.putSocket(key, mySock);
+                    if(this.messageProcessor instanceof NioTcpMessageProcessor) {
+                    	// https://java.net/jira/browse/JSIP-475 don't use iohandler in case of NIO communications of the socket will leak in the iohandler sockettable
+                    	((NioTcpMessageProcessor)this.messageProcessor).nioHandler.putSocket(key, mySock.getChannel());
+                    } else {
+                    	sipStack.ioHandler.putSocket(key, mySock);
+                    }
                     // since it can close the socket it needs to be after the mySock usage otherwise
                     // it the socket will be disconnected and NPE will be thrown in some edge cases
                     ((ConnectionOrientedMessageProcessor)this.messageProcessor).cacheMessageChannel(this);
