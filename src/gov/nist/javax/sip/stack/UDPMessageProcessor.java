@@ -162,8 +162,9 @@ public class UDPMessageProcessor extends MessageProcessor implements Runnable {
                 super.setIpAddress( sock.getLocalAddress() );
 
             }
-        } catch (SocketException ex) {
-            throw new IOException(ex.getMessage());
+        } catch (Exception ex) {
+        	if(this.congestionAuditor != null) this.congestionAuditor.stop();
+            throw new IOException(ex);
         }
     }
 
